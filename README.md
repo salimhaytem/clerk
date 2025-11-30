@@ -226,6 +226,9 @@ DATABASE_URL="postgresql://postgres:password@localhost:5432/ma_base?schema=publi
 ```
 clerk/
 ├── clerk-dashboard/          # Application Next.js
+│   ├── data/                # Fichiers CSV de données
+│   │   ├── agencies_agency_rows.csv
+│   │   └── contacts_contact_rows.csv
 │   ├── app/                 # Pages et layouts Next.js
 │   │   ├── api/             # API routes
 │   │   ├── dashboard/       # Pages du tableau de bord
@@ -245,9 +248,6 @@ clerk/
 │   ├── next.config.ts       # Configuration Next.js
 │   ├── middleware.ts        # Middleware Next.js
 │   └── ...                  # Autres fichiers de configuration
-├── data/                    # Fichiers CSV de données
-│   ├── agencies_agency_rows.csv
-│   └── contacts_contact_rows.csv
 ├── prisma/                   # Configuration et schéma Prisma
 │   ├── schema.prisma        # Schéma de la base de données
 │   └── seed.js             # Script de remplissage de la base de données
