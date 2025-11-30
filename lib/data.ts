@@ -44,27 +44,73 @@ export interface Contact {
 }
 
 export function getAgencies(): Agency[] {
-    const filePath = path.join(process.cwd(), '..', 'data', 'agencies_agency_rows.csv');
-    const fileContent = fs.readFileSync(filePath, 'utf-8');
+    try {
+        // Essayer plusieurs chemins possibles
+        const possiblePaths = [
+            path.join(process.cwd(), '..', 'data', 'agencies_agency_rows.csv'),
+            path.join(process.cwd(), 'data', 'agencies_agency_rows.csv'),
+            path.join(__dirname, '..', '..', 'data', 'agencies_agency_rows.csv'),
+        ];
 
-    const records = parse(fileContent, {
-        columns: true,
-        skip_empty_lines: true,
-    });
+        let filePath: string | null = null;
+        for (const p of possiblePaths) {
+            if (fs.existsSync(p)) {
+                filePath = p;
+                break;
+            }
+        }
 
-    return records;
+        if (!filePath) {
+            console.error('Agencies CSV file not found. Tried paths:', possiblePaths);
+            return [];
+        }
+
+        const fileContent = fs.readFileSync(filePath, 'utf-8');
+        const records = parse(fileContent, {
+            columns: true,
+            skip_empty_lines: true,
+        });
+
+        return records;
+    } catch (error) {
+        console.error('Error reading agencies CSV:', error);
+        return [];
+    }
 }
 
 export function getContacts(): Contact[] {
-    const filePath = path.join(process.cwd(), '..', 'data', 'contacts_contact_rows.csv');
-    const fileContent = fs.readFileSync(filePath, 'utf-8');
+    try {
+        // Essayer plusieurs chemins possibles
+        const possiblePaths = [
+            path.join(process.cwd(), '..', 'data', 'contacts_contact_rows.csv'),
+            path.join(process.cwd(), 'data', 'contacts_contact_rows.csv'),
+            path.join(__dirname, '..', '..', 'data', 'contacts_contact_rows.csv'),
+        ];
 
-    const records = parse(fileContent, {
-        columns: true,
-        skip_empty_lines: true,
-    });
+        let filePath: string | null = null;
+        for (const p of possiblePaths) {
+            if (fs.existsSync(p)) {
+                filePath = p;
+                break;
+            }
+        }
 
-    return records;
+        if (!filePath) {
+            console.error('Contacts CSV file not found. Tried paths:', possiblePaths);
+            return [];
+        }
+
+        const fileContent = fs.readFileSync(filePath, 'utf-8');
+        const records = parse(fileContent, {
+            columns: true,
+            skip_empty_lines: true,
+        });
+
+        return records;
+    } catch (error) {
+        console.error('Error reading contacts CSV:', error);
+        return [];
+    }
 }
 
 export function getAgencyById(id: string): Agency | undefined {

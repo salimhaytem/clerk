@@ -1,7 +1,6 @@
 import { auth } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
-import { getRemainingViews } from '@/lib/contact-limits';
-import { prisma } from '@/lib/prisma';
+import { getCachedAgencies } from '@/lib/data-cache';
 
 export async function GET(request: Request) {
     const { userId } = await auth();
@@ -10,40 +9,45 @@ export async function GET(request: Request) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '10');
-    const search = searchParams.get('search') || '';
+    try {
+        const { searchParams } = new URL(request.url);
+        const page = parseInt(searchParams.get('page') || '1');
+        const limit = parseInt(searchParams.get('limit') || '20');
+        const search = searchParams.get('search') || '';
 
-    const skip = (page - 1) * limit;
+        // Récupérer toutes les agences depuis le cache
+        let agencies = getCachedAgencies();
 
-    const where = search
-        ? {
-            OR: [
-                { name: { contains: search, mode: 'insensitive' as const } },
-                { state: { contains: search, mode: 'insensitive' as const } },
-                { type: { contains: search, mode: 'insensitive' as const } },
-            ],
+        // Appliquer la recherche si nécessaire
+        if (search) {
+            const searchLower = search.toLowerCase();
+            agencies = agencies.filter(agency => 
+                agency.name?.toLowerCase().includes(searchLower) ||
+                agency.state?.toLowerCase().includes(searchLower) ||
+                agency.type?.toLowerCase().includes(searchLower)
+            );
         }
-        : {};
 
-    const [agencies, total] = await Promise.all([
-        prisma.agency.findMany({
-            where,
-            skip,
-            take: limit,
-            orderBy: { name: 'asc' },
-        }),
-        prisma.agency.count({ where }),
-    ]);
+        // Calculer la pagination
+        const total = agencies.length;
+        const totalPages = Math.ceil(total / limit);
+        const skip = (page - 1) * limit;
+        const paginatedAgencies = agencies.slice(skip, skip + limit);
 
-    return NextResponse.json({
-        agencies,
-        pagination: {
-            page,
-            limit,
-            total,
-            totalPages: Math.ceil(total / limit),
-        },
-    });
+        return NextResponse.json({
+            agencies: paginatedAgencies,
+            pagination: {
+                page,
+                limit,
+                total,
+                totalPages,
+            },
+        });
+    } catch (error) {
+        console.error('Error fetching agencies:', error);
+        return NextResponse.json(
+            { error: 'Failed to fetch agencies' },
+            { status: 500 }
+        );
+    }
 }
